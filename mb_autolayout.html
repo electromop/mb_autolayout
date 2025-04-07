@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Formatter</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .editor, .output {
+            width: 40%;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+        .editor {
+            background-color: #f7f7f7;
+            border-right: 1px solid #ccc;
+        }
+        .output {
+            background-color: #fff;
+            overflow-x: auto;
+            white-space: nowrap; /* Изменено для отображения отформатированного кода */
+        }
+        .controls {
+            width: 20%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #e9ecef;
+        }
+        textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            outline: none;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        input {
+            margin-top: 10px;
+            padding: 5px;
+            font-size: 14px;
+            width: 80%;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+    <script>
+        function beautify(html) {
+            var tab = '\t';
+            var result = '';
+            var indent= '';
+
+            html.split(/>\s*</).forEach(function(element) {
+                if (element.match( /^\/\w/ )) {
+                    indent = indent.substring(tab.length);
+                }
+
+                result += indent + '<' + element + '>\r\n';
+
+                if (element.match( /^<?\w[^>]*[^\/]$/ ) && !element.startsWith("input")  ) { 
+                    indent += tab;              
+                }
+            });
+
+            return result.substring(1, result.length-3);
+        }
+        function formatHTML() {
+            const separator = document.querySelector('input').value;
+            const textarea = document.querySelector('textarea');
+            let htmlContent = textarea.value;
+            let blockCounter = 1;
+
+            if (separator) {
+                const regex = new RegExp(`(${separator})`, 'g');
+                htmlContent = htmlContent.replace(regex, (match, p1) => {
+                    if (blockCounter === 1) {
+                        return `<!-- EDITOR_BLOCK_TEMPLATE: mindbox_${blockCounter++} -->${p1}`;
+                    }
+                    return `<!-- Конец Письма--><!-- EDITOR_BLOCK_TEMPLATE: mindbox_${blockCounter++} -->${p1}`;
+                });
+            }
+
+            // Используем библиотеку beautify для форматирования HTML
+            htmlContent = beautify(htmlContent);
+
+            document.getElementById('formattedOutput').innerText = htmlContent;
+        }
+
+        function copyToClipboard() {
+            const formattedOutput = document.getElementById('formattedOutput').innerText;
+            navigator.clipboard.writeText(formattedOutput).then(() => {
+                alert('Форматированный код скопирован в буфер обмена!');
+            });
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
+</head>
+<body>
+    <div class="editor">
+        <textarea placeholder="Введите HTML код здесь..."></textarea>
+    </div>
+    <div class="controls">
+        <input type="text" placeholder="Введите разделитель...">
+        <button onclick="formatHTML()">Форматировать</button>
+        <button onclick="copyToClipboard()">Скопировать результат</button>
+    </div>
+    <div class="output">
+        <pre id="formattedOutput">Форматированный код будет отображаться здесь...</pre>
+    </div>
+</body>
+</html>
